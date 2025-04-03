@@ -52,6 +52,7 @@ const Modal = ({ showModal, setShowModal }) => {
       toast("Login Successful:");
     } catch (error) {
       toast("Login Failed:");
+      console.error("Login error:", error);
     }
     setLoading(false);
   };

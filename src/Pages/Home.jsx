@@ -45,7 +45,7 @@ const Home = () => {
     }
     try {
       const response = await axios.post(
-        "http://localhost:8000/pi/search/query",
+        "https://temp-production-e067.up.railway.app/api/search/query",
         {
           query,
           searchCategory: category,
