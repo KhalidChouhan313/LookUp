@@ -1,4 +1,4 @@
-import { Search, UploadIcon, Scan, MapIcon } from "lucide-react";
+import { Search, UploadIcon, Scan, MapIcon, MapPin } from "lucide-react";
 import React, { useState } from "react";
 import Modal from "../Components/Modal";
 import axios from "axios";
@@ -11,7 +11,6 @@ import {
   setLocation,
   setSearchResults,
 } from "../Store/searchReducer.js";
-import { useEffect } from "react";
 import { toast } from "react-toastify";
 const Home = () => {
   //#region   State Variables
@@ -38,9 +37,10 @@ const Home = () => {
       toast("Please complete all steps before searching!");
       return;
     }
-    const token = localStorage.getItem("token"); 
+    const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("User not logged in! No token found.");
+      toast("Unauthorized access! Please login first.");
+      setShowModal("login");
       return;
     }
     try {
@@ -71,7 +71,10 @@ const Home = () => {
   const handleQueryChange = (e) => {
     dispatch(setQuery(e.target.value));
   };
-  const handleCategoryChange = (e) => dispatch(setCategory(e.target.value));
+  const handleCategoryChange = (e) => {
+    const newCategory = e.target.value;
+    dispatch(setCategory([...category, newCategory]));
+  };
   const handleImageUpload = (e) => {
     const file = event.target.files[0];
     if (file) {
@@ -100,17 +103,22 @@ const Home = () => {
   };
 
   const nextStep = () => {
-    // if (step === 1 && !searchState.category) {
-    //   alert("Please  select a category!");
-    //   return;
-    // }
-    // if (
-    //   step === 3 &&
-    //   (!searchState.location.lat || !searchState.location.lng)
-    // ) {
-    //   alert("Please allow location access!");
-    //   return;
-    // }
+    console.log("category selected", category);
+
+    if (step === 1 && (!Array.isArray(category) || category.length === 0)) {
+      toast.error("Please select a category!");
+      return;
+    }
+    if (
+      step === 3 &&
+      (location.lat === null ||
+        location.lng === null ||
+        location.radius === null)
+    ) {
+      toast.error("Please allow location access!");
+      return;
+    }
+
     setStep(step + 1);
   };
 
@@ -122,18 +130,11 @@ const Home = () => {
   };
 
   const handleSearchClick = async () => {
-    const savedToken = localStorage.getItem("token");
-    if (!savedToken) {
-      toast("Unauthorized access! Please login first.");
-      setShowModal("login");
-      return;
-    }
+   
 
     if (searchValue.trim() !== "") {
       setSearchClicked(true);
-      if (!savedToken) {
-        showModal(true);
-      }
+    
     }
   };
   //#endregion
@@ -202,19 +203,22 @@ const Home = () => {
     }
   `}
       >
-        <div className="flex items-center justify-center flex-col gap-6 md:p-0 p-3 ">
+        <div className={`flex items-center justify-center flex-col  ${step === 4 ? "p-3" : "gap-6 md:p-0 p-3"}`}>
           <h1 className="text-text-color font-dm-sans text-[8vw] md:text-[2.5rem] font-extrabold leading-normal">
             Look Up
           </h1>
-          <div className="w-full flex items-center justify-center flex-col">
-            <div
-              className=" -mb-[1vh] w-full md:w-[29rem] h-[4.6875rem] flex items-center
+          <div className="w-full flex  flex-col">
+            {step == 4 ? null : (
+              <div
+                className=" -mb-[1vh] w-full md:w-[29rem] h-[4.6875rem] flex items-center
              p-4 rounded-t-lg border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md"
-            >
-              <h6 className="text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
-                Search Item
-              </h6>
-            </div>
+              >
+                <h6 className="text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
+                  Search Item
+                </h6>
+              </div>
+            )}
+
             {(step === 2 || step === 3) && (
               <>
                 <div
@@ -227,29 +231,28 @@ const Home = () => {
         }`}
                 >
                   <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mt-1 w-full md:w-[30rem]">
-                    <div
-                      className="border text-[#5A81FA] flex items-center justify-center gap-2
-                           p-1 rounded-lg shadow-sm text-[4vw] md:text-base bg-white"
-                    >
-                      <Scan />
-                      Quality meal choices
-                    </div>
-                    <div
-                      className="border text-[#5A81FA] flex items-center justify-center gap-1 md:gap-2
-           bg-white rounded-lg shadow-sm text-[4vw] md:text-base"
-                    >
-                      <Scan />
-                      Highly rated riders
-                    </div>
+                    {Array.isArray(category) &&
+                      category.map((item, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className="border text-[#5A81FA] flex items-center justify-center gap-2 p-1 rounded-lg shadow-sm text-[4vw] md:text-base bg-white"
+                          >
+                            <input
+                              type="radio"
+                              className="m-1 transform scale-150"
+                              name="category"
+                              id={`category-${index}`}
+                              value={item}
+                            />
+                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
-
-                {step === 3 && (
-                  <div
-                    className={`w-full -mt-2 md:w-[29rem] h-[4.6875rem] flex items-center p-3 rounded-t-lg
-                   border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
-          translate-y-0 opacity-100 scale-100`}
-                  >
+                {step === 3 && image && (
+                  <div className="w-full -mt-2 md:w-[29rem] h-[4.6875rem] flex items-center p-3 rounded-t-lg border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md translate-y-0 opacity-100 scale-100">
                     <img
                       src={image}
                       alt="Meal Image"
@@ -274,9 +277,11 @@ const Home = () => {
                 <div className="border text-[#5A81FA] flex items-center justify-center md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
                   <input
                     type="radio"
+                    className="m-1 transform scale-150"
                     name="category"
-                    id="onboarding"
-                    value="Quick and easy onboarding"
+                    id="support"
+                    value="  Quality meal choices
+"
                     onChange={handleCategoryChange}
                   />
                   Quick and easy onboarding
@@ -284,9 +289,11 @@ const Home = () => {
                 <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
                   <input
                     type="radio"
+                    className="m-1 transform scale-150"
                     name="category"
-                    id="mealChoices"
-                    value="Quality meal choices"
+                    id="support"
+                    value="electronics
+"
                     onChange={handleCategoryChange}
                   />
                   Quality meal choices
@@ -294,9 +301,11 @@ const Home = () => {
                 <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
                   <input
                     type="radio"
+                    className="m-1 transform scale-150"
                     name="category"
-                    id="liveUpdates"
-                    value="Live updates on order"
+                    id="support"
+                    value="electronics
+"
                     onChange={handleCategoryChange}
                   />
                   Live updates on order
@@ -304,9 +313,11 @@ const Home = () => {
                 <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
                   <input
                     type="radio"
+                    className="m-1 transform scale-150"
                     name="category"
-                    id="riders"
-                    value="electronics"
+                    id="support"
+                    value="electronics
+"
                     onChange={handleCategoryChange}
                   />
                   Electronics{" "}
@@ -314,9 +325,11 @@ const Home = () => {
                 <div className="col-span-2 md:col-span-2 border text-[#5A81FA] flex items-center justify-center gap-2 p-3 rounded-lg shadow-sm text-[4vw] md:text-base">
                   <input
                     type="radio"
+                    className="m-1 transform scale-150"
                     name="category"
                     id="support"
-                    value="24/7 support for customers and vendors"
+                    value="electronics
+"
                     onChange={handleCategoryChange}
                   />
                   24/7 support for customers and vendors
@@ -376,8 +389,8 @@ const Home = () => {
                 >
                   <div className="relative w-10 h-10">
                     <div className="w-10 h-10 bg-blue-100 text-blue-500 flex justify-center items-center rounded-full cursor-pointer">
-                      <MapIcon
-                        className="w-6 h-6 cursor-pointer"
+                      <MapPin
+                        className="w-8 h-8 cursor-pointer"
                         onClick={getLocation}
                       />
                     </div>
@@ -388,12 +401,115 @@ const Home = () => {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={SearchResult}
-                className="mt-4 border-2 p-2 bg-red-500 "
-              >
-                submit Search
-              </button>
+            </div>
+          )}
+          {step === 4 && (
+            <div className={`  ${searchClicked ? "block" : "hidden"}`}>
+              <h4 className="">Search</h4>
+              <div className="w-full flex  flex-col">
+                <div
+                  className=" -mb-[1vh] w-full md:w-[29rem] h-[4rem] flex items-center
+                   p-4 rounded-2xl border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md"
+                >
+                  <h6 className="ml-1 text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
+                    Search Item
+                  </h6>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <h4 className="">Search Category</h4>
+                <div
+                  className={`  w-full md:w-[29rem] h-[4rem] flex items-center p-3 rounded-2xl
+                 border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
+                 ${
+                   step === 2 || step === 3 || step === 4
+                     ? "translate-y-0 opacity-100 scale-100"
+                     : "translate-y-full opacity-0 scale-90"
+                 }`}
+                >
+                  <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mt-1 w-full items-center ">
+                    {Array.isArray(category) &&
+                      category.map((item, index) => {
+                        return (
+                          <div
+                            key={index}
+                            className="border text-[#5A81FA] flex items-center justify-center gap-2 p-1 rounded-lg shadow-sm text-[4vw] md:text-base bg-white"
+                          >
+                            <input
+                              type="radio"
+                              className="m-1 transform scale-150"
+                              name="category"
+                              id={`category-${index}`}
+                              value={item}
+                            />
+                            {item.charAt(0).toUpperCase() + item.slice(1)}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              </div>
+              {image && (
+                <div className="mt-3">
+                  <h4 className="">Search Category</h4>
+                  <div
+                    className={`  w-full flex items-center justify-center p-2 rounded-2xl
+               border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
+               ${
+                 step === 2 || step === 3 || step === 4
+                   ? "translate-y-0 opacity-100 scale-100"
+                   : "translate-y-full opacity-0 scale-90"
+               }`}
+                  >
+                    <img
+                      src={image}
+                      alt="img"
+                      className="w-[20vw] md:w-[10vw]  h-[20vw] md:h-[8vw] rounded-xl border-2 border-dashed  p-1"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3">
+                <div
+                  className={`  w-full  flex items-center p-3 rounded-2xl
+
+                 border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
+                 ${
+                   step === 2 || step === 3 || step === 4
+                     ? "translate-y-0 opacity-100 scale-100"
+                     : "translate-y-full opacity-0 scale-90"
+                 }`}
+                >
+                  <div className=" flex flex-row gap-2 font-bold text-center ">
+                    <p>Latitude: {location.lat}</p>
+                    <p> Longitude: {location.lng}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-1">
+                <div
+                  className={`  w-full md:w-[29rem] h-[4rem] flex items-center p-3 rounded-full
+                 border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
+                 ${
+                   step === 2 || step === 3 || step === 4
+                     ? "translate-y-0 opacity-100 scale-100"
+                     : "translate-y-full opacity-0 scale-90"
+                 }`}
+                >
+                  <div className=" flex flex-row ">
+                    <p className="font-bold">Your selected radius: {location.radius}km</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className=" w-full flex items-center justify-center mt-3">
+                <button className="border-2 border-gray-300 bg-white rounded-full px-4 py-2 w-full " style={{ borderRadius: "50px" }}
+                 onClick={SearchResult}>
+                  Submit Search
+                </button>
+              </div>
             </div>
           )}
 
@@ -409,15 +525,17 @@ const Home = () => {
                 Skip
               </button>
             )}
-            <button
-              className="mt-6 inline-flex px-[25px] py-[10px]   
-          text-gray-700 font-medium shadow-md text-[4vw] md:text-base 
-          justify-center items-center gap-[10px] border-[1px]  border-[rgba(31,31,31,0.30)] bg-white"
-              style={{ borderRadius: "50px" }}
-              onClick={nextStep}
-            >
-              Next
-            </button>
+            {step === 4 ? null : (
+              <button
+                className="mt-6 inline-flex px-[25px] py-[10px]   
+        text-gray-700 font-medium shadow-md text-[4vw] md:text-base 
+        justify-center items-center gap-[10px] border-[1px]  border-[rgba(31,31,31,0.30)] bg-white"
+                style={{ borderRadius: "50px" }}
+                onClick={nextStep}
+              >
+                Next
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   query: "",
-  category: "",
+  category: [],
   imageURL: null,
   location: { lat: null, lng: null, radius: null },
   searchResults: [],
