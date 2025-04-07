@@ -1,17 +1,19 @@
-import { Search, UploadIcon, Scan, MapIcon, MapPin } from "lucide-react";
+import axios from "axios";
+import { Search, UploadIcon } from "lucide-react";
 import React, { useState } from "react";
 import Modal from "../Components/Modal";
-import axios from "axios";
 
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+import MapComponent from "../Components/Map.jsx";
 import {
-  setQuery,
+  removeCategory,
+  removeQuery,
   setCategory,
   setImageURL,
-  setLocation,
+  setQuery,
   setSearchResults,
 } from "../Store/searchReducer.js";
-import { toast } from "react-toastify";
 const Home = () => {
   //#region   State Variables
   const [isActive, setIsActive] = useState(false);
@@ -71,10 +73,28 @@ const Home = () => {
   const handleQueryChange = (e) => {
     dispatch(setQuery(e.target.value));
   };
-  const handleCategoryChange = (e) => {
+  const handleCategoryAdd = (e) => {
     const newCategory = e.target.value;
     dispatch(setCategory([...category, newCategory]));
+    step === 1 && setStep(2);
   };
+  const RemoveCategory = (e, item) => {
+    e.preventDefault();
+    dispatch(removeCategory(item));
+    setStep(1);
+  };
+  const RemoveQuery = (e, item) => {
+    e.preventDefault();
+    dispatch(removeQuery(item));
+    setSearchValue("");
+  };
+  const RemoveImage = (e, item) => {
+    e.preventDefault();
+    uploadImage(null);
+    dispatch(removeCategory(item));
+    setStep(2);
+  };
+
   const handleImageUpload = (e) => {
     const file = event.target.files[0];
     if (file) {
@@ -82,26 +102,9 @@ const Home = () => {
       uploadImage(uploadFile);
       dispatch(setImageURL(uploadFile));
       toast("Image uploaded successfully!");
-     setTimeout(() => {
-      step === 2 && setStep(3);
-     }, 1000);
-    }
-  };
-
-  const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          dispatch(setLocation({ lat: latitude, lng: longitude, radius: 10 }));
-          toast("Success");
-          console.log(latitude, longitude);
-        },
-
-        () => toast.error("Geolocation access denied")
-      );
-    } else {
-      toast.error("Geolocation is not supported by this browser.");
+      setTimeout(() => {
+        step === 2 && setStep(3);
+      }, 1000);
     }
   };
 
@@ -125,13 +128,6 @@ const Home = () => {
     setStep(step + 1);
   };
 
-  const handleClick = () => {
-    if (!hasClickedOnce) {
-      setIsActive(true);
-      setHasClickedOnce(true);
-    }
-  };
-
   const handleSearchClick = async () => {
     if (searchValue.trim() !== "") {
       setSearchClicked(true);
@@ -152,12 +148,8 @@ const Home = () => {
         </h1>
 
         <div
-          className={`flex items-center border rounded-full px-4 py-3 transition-all duration-300 relative ${
-            isActive
-              ? "md:w-[30vw] w-[100vw] border-gray-400 shadow-lg"
-              : "md:w-[30vw] w-full border-gray-300 md:p-10 p-[10vw]"
-          }`}
-          onClick={handleClick}
+          className="flex items-center border rounded-full px-4 py-3
+             transition-all duration-300 relative md:w-[30vw] w-full border-gray-300 md:p-10 p-[10vw] "
         >
           <Search
             onClick={handleSearchClick}
@@ -168,19 +160,10 @@ const Home = () => {
             } `}
             size={24}
           />
-          <span
-            className={` whitespace-nowrap text-[rgba(31,31,31,0.60)] font-dmSans
-               text-[16px] font-normal leading-normal ${
-                 isActive ? "hidden" : "block"
-               }`}
-          >
-            Search products or services
-          </span>
+
           <input
             type="text"
-            className={`ml-2 w-full bg-transparent outline-none  transition-opacity duration-300 ${
-              isActive ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
+            className="ml-2 w-full bg-transparent outline-none  transition-opacity duration-300 "
             value={searchValue || query}
             onChange={(e) => {
               setSearchValue(e.target.value);
@@ -220,7 +203,10 @@ const Home = () => {
              p-4 rounded-t-2xl border border-gray-300 bg-gradient-to-b from-white
               to-[#f1f1f1]/95 shadow-md"
               >
-                <h6 className="text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
+                <h6
+                  onClick={(e) => RemoveQuery(e, query)}
+                  className="text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal"
+                >
                   {query}
                 </h6>
               </div>
@@ -251,6 +237,7 @@ const Home = () => {
                               name="category"
                               id={`category-${index}`}
                               value={item}
+                              onChange={(e) => RemoveCategory(e, item)}
                             />
                             {item.charAt(0).toUpperCase() + item.slice(1)}
                           </div>
@@ -261,9 +248,10 @@ const Home = () => {
                 {step === 3 && image && (
                   <div className="w-full -mt-2 md:w-[29rem] h-[4.6875rem] flex items-center p-3 rounded-t-2xl border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md translate-y-0 opacity-100 scale-100">
                     <img
-                      src={image}
+                      src={imageURL}
                       alt="Meal Image"
                       className="w-16 h-16 object-fill border-dotted border-2 rounded-lg p-1"
+                      onClick={(e) => RemoveImage(e, image)}
                     />
                   </div>
                 )}
@@ -289,7 +277,7 @@ const Home = () => {
                     id="support"
                     value="  Quality meal choices
 "
-                    onChange={handleCategoryChange}
+                    onChange={handleCategoryAdd}
                   />
                   Quick and easy onboarding
                 </div>
@@ -301,7 +289,7 @@ const Home = () => {
                     id="support"
                     value="electronics
 "
-                    onChange={handleCategoryChange}
+                    onChange={handleCategoryAdd}
                   />
                   Quality meal choices
                 </div>
@@ -313,7 +301,7 @@ const Home = () => {
                     id="support"
                     value="electronics
 "
-                    onChange={handleCategoryChange}
+                    onChange={handleCategoryAdd}
                   />
                   Live updates on order
                 </div>
@@ -325,7 +313,7 @@ const Home = () => {
                     id="support"
                     value="electronics
 "
-                    onChange={handleCategoryChange}
+                    onChange={handleCategoryAdd}
                   />
                   Electronics{" "}
                 </div>
@@ -337,7 +325,7 @@ const Home = () => {
                     id="support"
                     value="electronics
 "
-                    onChange={handleCategoryChange}
+                    onChange={handleCategoryAdd}
                   />
                   24/7 support for customers and vendors
                 </div>
@@ -358,7 +346,12 @@ const Home = () => {
               <div className="border-2 border-dashed border-gray-400 rounded-lg w-[20rem] md:w-[30rem] h-[12rem] flex flex-col justify-center items-center bg-gray-50 shadow-sm mt-4">
                 <div className="flex flex-col items-center">
                   {image ? (
-                    <img src={image} alt="Product Image" className="w-full h-[25vh] object-contain rounded-2xl border-2 p-1 border-dashed" />
+                    <img
+                      src={imageURL}
+                      alt="Product Image"
+                      className="w-full h-[25vh] object-contain rounded-2xl border-2 p-1 border-dashed"
+                      onClick={(e) => RemoveImage(e, imageURL)}
+                    />
                   ) : (
                     <>
                       <div className="relative w-10 h-10">
@@ -395,24 +388,12 @@ const Home = () => {
                 Select Location & Search Radius{" "}
               </h3>
 
-              <div className="border-2 border-dashed border-gray-400 rounded-lg w-[20rem] md:w-[29rem] h-[10rem] flex flex-col justify-center items-center bg-gray-50 shadow-sm mt-4">
-                <div
-                  className="flex 
-                flex-col items-center"
-                >
-                  <div className="relative w-10 h-10">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-500 flex justify-center items-center rounded-full cursor-pointer">
-                      <MapPin
-                        className="w-8 h-8 cursor-pointer"
-                        onClick={getLocation}
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-blue-500 text-sm mt-2">
-                    Share your Location
-                  </p>
-                </div>
+              <div
+                className="border-2 border-dashed border-gray-400 
+                rounded-lg w-[20rem] md:w-[29rem] h-[10rem] flex flex-col
+                 justify-center items-center bg-gray-50 shadow-sm mt-4"
+              >
+                <MapComponent />
               </div>
             </div>
           )}
@@ -425,7 +406,7 @@ const Home = () => {
                    p-4 rounded-2xl border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md"
                 >
                   <h6 className="ml-1 text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
-                    Search Item
+                    {query}
                   </h6>
                 </div>
               </div>
@@ -454,6 +435,7 @@ const Home = () => {
                               className="m-1 transform scale-150"
                               name="category"
                               id={`category-${index}`}
+                              onChange={(e) => RemoveCategory(e, item)}
                               value={item}
                             />
                             {item.charAt(0).toUpperCase() + item.slice(1)}
@@ -476,8 +458,9 @@ const Home = () => {
                }`}
                   >
                     <img
-                      src={image}
+                      src={imageURL}
                       alt="img"
+                      onClick={(e) => RemoveImage(e, image)}
                       className="w-[20vw] md:w-[10vw]  h-[20vw] md:h-[8vw] rounded-xl border-2 border-dashed  p-1"
                     />
                   </div>
@@ -486,9 +469,8 @@ const Home = () => {
 
               <div className="mt-3">
                 <div
-                  className={`  w-full  flex items-center p-3 rounded-2xl
-
-                 border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
+                  className={`  w-full  flex items-center justify-center  rounded-2xl border-2 border-dashed border-gray-400
+                  bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
                  ${
                    step === 2 || step === 3 || step === 4
                      ? "translate-y-0 opacity-100 scale-100"
@@ -496,8 +478,11 @@ const Home = () => {
                  }`}
                 >
                   <div className=" flex flex-row gap-2 font-bold text-center ">
-                    <p>Latitude: {location.lat}</p>
-                    <p> Longitude: {location.lng}</p>
+                    <img
+                      src={location.screenShot}
+                      alt="selected area screenShot"
+                      className=" w-[30rem] h-full rounded-[10px]"
+                    />
                   </div>
                 </div>
               </div>
@@ -513,7 +498,9 @@ const Home = () => {
                 >
                   <div className=" flex flex-row ">
                     <p className="font-bold">
-                      Your selected radius: {location.radius}km
+                      Your selected radius:{" "}
+                      {location.radius ? Math.round(location.radius / 1000) : 0}
+                      km
                     </p>
                   </div>
                 </div>
