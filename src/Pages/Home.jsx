@@ -1,11 +1,11 @@
 import axios from "axios";
 import { Search, UploadIcon } from "lucide-react";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import Modal from "../Components/Modal";
 
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import MapComponent from "../Components/Map.jsx";
+import MapComponent from "../Components/SearchComponents/Map.jsx";
 import {
   removeCategory,
   removeQuery,
@@ -14,16 +14,16 @@ import {
   setQuery,
   setSearchResults,
 } from "../Store/searchReducer.js";
+import CategoryComponents from "../Components/SearchComponents/CategoryComponents.jsx";
 const Home = () => {
   //#region   State Variables
-  const [isActive, setIsActive] = useState(false);
-  const [hasClickedOnce, setHasClickedOnce] = useState(false);
+
   const [searchClicked, setSearchClicked] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [step, setStep] = useState(1);
   const [image, uploadImage] = useState(null);
   const [showModal, setShowModal] = useState(null);
-
+  const searchInputRef = useRef(null);
   //#endregion
 
   //#region Redux State Variables
@@ -73,11 +73,7 @@ const Home = () => {
   const handleQueryChange = (e) => {
     dispatch(setQuery(e.target.value));
   };
-  const handleCategoryAdd = (e) => {
-    const newCategory = e.target.value;
-    dispatch(setCategory([...category, newCategory]));
-    step === 1 && setStep(2);
-  };
+
   const RemoveCategory = (e, item) => {
     e.preventDefault();
     dispatch(removeCategory(item));
@@ -87,6 +83,10 @@ const Home = () => {
     e.preventDefault();
     dispatch(removeQuery(item));
     setSearchValue("");
+    setSearchClicked(false);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
   };
   const RemoveImage = (e, item) => {
     e.preventDefault();
@@ -136,11 +136,11 @@ const Home = () => {
   //#endregion
 
   return (
-    <div className="flex justify-center items-center h-screen flex-col overflow-y-hidden ">
+    <div className="flex justify-center items-center h-screen flex-col overflow-y-hidden  ">
       <div
         className={`flex items-center justify-center flex-col gap-[20px] 
           transition-all duration-500 ease-in-out h-full ${
-            searchClicked ? " hidden  " : "block"
+            searchClicked ? " hidden  " : "block  mt-[50vh]"
           }`}
       >
         <h1 className="text-text-color font-dm-sans text-[40px] font-extrabold leading-normal">
@@ -163,6 +163,7 @@ const Home = () => {
 
           <input
             type="text"
+            ref={searchInputRef}
             className="ml-2 w-full bg-transparent outline-none  transition-opacity duration-300 "
             value={searchValue || query}
             onChange={(e) => {
@@ -184,7 +185,7 @@ const Home = () => {
     ${
       searchClicked || step === 2
         ? "translate-y-0 opacity-100 scale-100"
-        : "translate-y-full opacity-0 scale-90"
+        : "translate-y-full opacity-0 scale-90 "
     }
   `}
       >
@@ -260,77 +261,11 @@ const Home = () => {
           </div>
 
           {step === 1 && (
-            <div
-              className={`mt-8 text-center ${
-                searchClicked ? "block" : "hidden"
-              } `}
-            >
-              <h2 className="text-blue-400 font-dm-sans text-[6vw] md:text-[1.5rem] font-bold">
-                Categories
-              </h2>
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-2 mt-1 w-full md:w-[30rem]">
-                <div className="border text-[#5A81FA] flex items-center justify-center md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
-                  <input
-                    type="radio"
-                    className="m-1 transform scale-150"
-                    name="category"
-                    id="support"
-                    value="  Quality meal choices
-"
-                    onChange={handleCategoryAdd}
-                  />
-                  Quick and easy onboarding
-                </div>
-                <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
-                  <input
-                    type="radio"
-                    className="m-1 transform scale-150"
-                    name="category"
-                    id="support"
-                    value="electronics
-"
-                    onChange={handleCategoryAdd}
-                  />
-                  Quality meal choices
-                </div>
-                <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
-                  <input
-                    type="radio"
-                    className="m-1 transform scale-150"
-                    name="category"
-                    id="support"
-                    value="electronics
-"
-                    onChange={handleCategoryAdd}
-                  />
-                  Live updates on order
-                </div>
-                <div className="border text-[#5A81FA] flex items-center justify-center gap-2 md:p-3 p-2 rounded-lg shadow-sm text-[4vw] md:text-base">
-                  <input
-                    type="radio"
-                    className="m-1 transform scale-150"
-                    name="category"
-                    id="support"
-                    value="electronics
-"
-                    onChange={handleCategoryAdd}
-                  />
-                  Electronics{" "}
-                </div>
-                <div className="col-span-2 md:col-span-2 border text-[#5A81FA] flex items-center justify-center gap-2 p-3 rounded-lg shadow-sm text-[4vw] md:text-base">
-                  <input
-                    type="radio"
-                    className="m-1 transform scale-150"
-                    name="category"
-                    id="support"
-                    value="electronics
-"
-                    onChange={handleCategoryAdd}
-                  />
-                  24/7 support for customers and vendors
-                </div>
-              </div>
-            </div>
+            <CategoryComponents
+              searchClicked={searchClicked}
+              setStep={setStep}
+              step={step}
+            />
           )}
 
           {step === 2 && (
@@ -405,7 +340,10 @@ const Home = () => {
                   className=" -mb-[1vh] w-full md:w-[29rem] h-[4rem] flex items-center
                    p-4 rounded-2xl border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md"
                 >
-                  <h6 className="ml-1 text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
+                  <h6
+                    onClick={(e) => RemoveQuery(e, query)}
+                    className="ml-1 text-[#1F1F1F] font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal"
+                  >
                     {query}
                   </h6>
                 </div>

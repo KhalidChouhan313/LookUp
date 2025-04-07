@@ -10,7 +10,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { setLocation } from "../Store/searchReducer";
+import { setLocation } from "../../Store/searchReducer";
 import { useDispatch } from "react-redux";
 
 delete L.Icon.Default.prototype._getIconUrl;
