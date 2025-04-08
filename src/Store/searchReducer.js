@@ -51,6 +51,7 @@ export const {
   setSearchResults,
   removeCategory,
   removeQuery,
+  removeLocation,
 } = searchSlice.actions;
 
 export default searchSlice.reducer;
