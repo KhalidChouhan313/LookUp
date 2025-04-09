@@ -1,117 +1,93 @@
-import React, { useState, useEffect } from "react";
-import leafletImage from "leaflet-image";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  useMapEvent,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
-import { setLocation } from "../../Store/searchReducer";
+import React, { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { setLocation } from "../../Store/searchReducer";
 import { toast } from "react-toastify";
 
-// Fix for leaflet marker icon URL
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
-
-const MapEvent = ({ initialLatLng }) => {
-  const [markerPosition, setMarkerPosition] = useState(initialLatLng);
-  const [radius, setRadius] = useState(null);
+function MapComponent() {
   const dispatch = useDispatch();
+  const [coords, setCoords] = useState({ lat: null, lng: null });
+  const [locationAllowed, setLocationAllowed] = useState(false);
+  const [locationDenied, setLocationDenied] = useState(false);
 
-  useMapEvent("click", (e) => {
-    const { lat, lng } = e.latlng;
-    setMarkerPosition([lat, lng]);
+  const requestLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
 
-    const initialPoint = L.latLng(initialLatLng);
-    const SetPoint = L.latLng(lat, lng);
-    const distance = initialPoint.distanceTo(SetPoint);
-    setRadius(distance);
+        setCoords({ lat: latitude, lng: longitude });
 
-    const map = e.target;
+        const screenShotURL = `https://maps.googleapis.com/maps/api/staticmap?center=${latitude},${longitude}&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7Clabel:U%7C${latitude},${longitude}&key=YOUR_API_KEY`;
 
-    if (map._loaded) {
-      leafletImage(map, (err, canvas) => {
-        if (err) {
-          toast.error("Error capturing map image");
-          return;
-        }
-        const screenShot = canvas.toDataURL();
         dispatch(
           setLocation({
-            lat,
-            lng,
-            radius: distance,
-            screenShot: screenShot,
+            lat: latitude,
+            lng: longitude,
+            screenShot: screenShotURL,
           })
         );
-      });
-    } else {
-      toast.error("Map is not fully loaded yet.");
-    }
 
-    // Update location state
-    dispatch(
-      setLocation({
-        lat,
-        lng,
-        radius: distance,
-      })
+        setLocationAllowed(true);
+        setLocationDenied(false);
+      },
+      (error) => {
+        console.error("Error getting location", error);
+        toast.error("Error getting location. Please enable location services.");
+        if (error.code === error.PERMISSION_DENIED) {
+          setLocationDenied(true);
+        }
+
+        setLocationAllowed(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
     );
-  });
-
-  return (
-    <Marker position={markerPosition}>
-      <Popup>Selected Location</Popup>
-    </Marker>
-  );
-};
-
-function MapComponent() {
-  const [location, setLocationData] = useState({ lat: 24.8607, lng: 67.0011 });
+  };
 
   useEffect(() => {
-    const infoApiKey = import.meta.env.VITE_IPINFO_KEY;
-    if (!infoApiKey) {
-      toast.error("IPInfo API key is not defined");
-      return;
-    }
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((permissionStatus) => {
+        if (permissionStatus.state === "granted") {
+          requestLocation();
+        } else if (permissionStatus.state === "denied") {
+          setLocationDenied(true);
+        } else {
+          requestLocation();
+        }
 
-    fetch(`https://ipinfo.io?token=${infoApiKey}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("IPInfo Location Data:", data);
-        const [lat, lng] = data.loc.split(",");
-        setLocationData({
-          lat: parseFloat(lat),
-          lng: parseFloat(lng),
-        });
-      })
-      .catch((err) => {
-        console.error("Error fetching location from IPInfo:", err);
-        toast.error("Error fetching location");
+        permissionStatus.onchange = () => {
+          if (permissionStatus.state === "granted") {
+            requestLocation();
+          } else if (permissionStatus.state === "denied") {
+            setLocationDenied(true);
+          }
+        };
       });
-  }, []);
+  }, [dispatch]);
 
   return (
-    <div style={{ height: "90%", width: "95%", borderRadius: "10px" }}>
-      <MapContainer
-        center={[location.lat, location.lng]}
-        zoom={13}
-        style={{ height: "100%", width: "100%", borderRadius: "10px" }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <MapEvent initialLatLng={[location.lat, location.lng]} />
-      </MapContainer>
+    <div>
+      {coords.lat && coords.lng ? (
+        <iframe
+          title="User Location"
+          src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`}
+          className="w-full h-[20vh] md:h-[20vh] rounded-lg shadow-md"
+          allowFullScreen
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        ></iframe>
+      ) : locationDenied ? (
+        <div>
+          <p>Location access is required to show your position.</p>
+          <button
+            onClick={requestLocation}
+            className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
+          >
+            Enable Location
+          </button>
+        </div>
+      ) : (
+        <p>Detecting location...</p>
+      )}
     </div>
   );
 }

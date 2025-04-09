@@ -15,6 +15,7 @@ import {
   removeLocation,
 } from "../Store/searchReducer.js";
 import CategoryComponents from "../Components/SearchComponents/CategoryComponents.jsx";
+
 const Home = () => {
   //#region   State Variables
 
@@ -37,7 +38,6 @@ const Home = () => {
 
   const SearchResult = async () => {
     if (!query.trim() || !category || !location.lat || !location.lng) {
-      toast("Please complete all steps before searching!");
       return;
     }
     const token = localStorage.getItem("token");
@@ -99,7 +99,6 @@ const Home = () => {
     e.preventDefault();
     uploadImage(null);
     dispatch(removeCategory(item));
-    toast("Image removed ");
     setLastCategoryStep(step);
     setStep(2);
   };
@@ -116,9 +115,7 @@ const Home = () => {
       const uploadFile = URL.createObjectURL(file);
       uploadImage(uploadFile);
       dispatch(setImageURL(uploadFile));
-      lastCategoryStep
-        ? toast("Image Changed successfully!")
-        : toast.success("Image uploaded successfully!");
+
       if (lastCategoryStep) {
         setStep(lastCategoryStep);
         setLastCategoryStep(null);
@@ -159,55 +156,62 @@ const Home = () => {
 
   return (
     <div className="flex justify-center items-center h-screen flex-col overflow-y-hidden  ">
-      <div
-        className={`flex items-center justify-center flex-col gap-[20px] 
-          transition-all duration-500 ease-in-out h-full ${
-            searchClicked ? " hidden  " : "block  mb-[10%]  "
-          }`}
-      >
-        <h1 className="text-text-color font-dm-sans text-[40px] font-extrabold leading-normal">
-          Look Up
-        </h1>
-
-        <div
-          className="flex items-center border rounded-full px-4 py-3
-             transition-all duration-300 relative md:w-[30vw] w-[100vw] border-gray-300 md:p-10 p-[10vw] "
-        >
-          <Search
-            onClick={handleSearchClick}
-            className={`cursor-pointer transition-transform duration-300 absolute left-[90%] ${
-              searchValue.trim() === ""
-                ? "text-gray-400 cursor-not-allowed"
-                : "text-black hover:text-black"
-            } `}
-            size={24}
-          />
-
-          <input
-            type="text"
-            ref={searchInputRef}
-            className="ml-2 w-full bg-transparent outline-none  transition-opacity duration-300 "
-            value={searchValue || query}
-            onChange={(e) => {
-              setSearchValue(e.target.value);
-              handleQueryChange(e);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearchClick();
-              }
-            }}
-            placeholder="Search Here..."
-          />
-        </div>
-      </div>
-      <Modal showModal={showModal} setShowModal={setShowModal} />
       <AnimatePresence>
+        {!searchClicked && (
+          <motion.div
+            initial={{ y: 0, opacity: 1, backgroundColor: "transparent" }}
+            exit={{
+              y: 100,
+              opacity: 0,
+              duration: 0.1,
+              backgroundColor: "black",
+              width: "100%",
+              height: "100vh",
+            }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="flex items-center justify-center flex-col gap-[20px] 
+               transition-all duration-500 ease-in-out h-full mb-[40%] md:mb-[10%]"
+          >
+            <h1 className="text-text-color font-dm-sans text-[40px] font-extrabold leading-normal">
+              Look Up
+            </h1>
+            <div className="flex items-center border rounded-full px-4 py-3 transition-all duration-300 relative md:w-[30vw] w-[100vw] border-gray-300 md:p-10 p-[10vw]">
+              <Search
+                onClick={handleSearchClick}
+                className={`cursor-pointer transition-transform duration-300 absolute left-[90%] ${
+                  searchValue.trim() === ""
+                    ? "text-gray-400 cursor-not-allowed"
+                    : "text-black hover:text-black"
+                }`}
+                size={24}
+              />
+              <input
+                type="text"
+                ref={searchInputRef}
+                className="ml-2 w-full bg-transparent outline-none transition-opacity duration-300"
+                value={searchValue || query}
+                onChange={(e) => {
+                  setSearchValue(e.target.value);
+                  handleQueryChange(e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearchClick();
+                  }
+                }}
+                placeholder="Search Here..."
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence mode="wait">
+        <Modal showModal={showModal} setShowModal={setShowModal} />
         {(searchClicked || step === 2) && (
           <motion.div
-            initial={{ y: 200, opacity: 9, scale: 0.9 }}
-            animate={{ y: -60, opacity: 2, scale: 1 }}
-            exit={{ y: 100, opacity: 0, scale: 0.9 }}
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -50, opacity: 0 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
             className="your-other-classes"
           >
@@ -299,9 +303,9 @@ const Home = () => {
                   {step === 1 && (
                     <motion.div
                       key="category"
-                      initial={{ y: 100, opacity: 0, scale: 0.9 }}
-                      animate={{ y: 0, opacity: 1, scale: 1 }}
-                      exit={{ y: 100, opacity: 0, scale: 0.9 }}
+                      initial={{ y: 100, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: 100, opacity: 0 }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                       className="w-full h-full flex flex-col items-center mt-8"
                     >
@@ -385,7 +389,11 @@ const Home = () => {
                 rounded-lg w-[20rem] md:w-[29rem] h-[10rem] flex flex-col
                  justify-center items-center bg-gray-50 shadow-sm mt-4"
                       >
-                        <MapComponent />
+                        {<MapComponent /> ? (
+                          <MapComponent />
+                        ) : (
+                          <h2>Loading...</h2>
+                        )}
                       </div>
                     </div>
                   )}
