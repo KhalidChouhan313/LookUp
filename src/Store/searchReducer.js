@@ -4,7 +4,10 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   query: "",
   category: [],
-  imageURL: null,
+  imageURL: {
+    url: null,
+    name: null,
+  },
   location: { lat: null, lng: null, radius: null, screenShot: null },
   searchResults: [],
 };
@@ -20,7 +23,10 @@ const searchSlice = createSlice({
       state.category = action.payload;
     },
     setImageURL: (state, action) => {
-      state.imageURL = action.payload;
+      state.imageURL = {
+        url: action.payload.url,
+        name: action.payload.name,
+      };
     },
     setLocation: (state, action) => {
       state.location = action.payload;
@@ -35,10 +41,16 @@ const searchSlice = createSlice({
       delete state.query;
     },
     removeImageURL: (state) => {
-      delete state.imageURL;
+      state.imageURL = {
+        url: null,
+        name: null,
+      };
     },
     removeLocation: (state) => {
       delete state.location;
+    },
+    removeRadious: (state) => {
+      delete state.location.radius;
     },
   },
 });
@@ -52,6 +64,7 @@ export const {
   removeCategory,
   removeQuery,
   removeLocation,
+  removeRadious,
 } = searchSlice.actions;
 
 export default searchSlice.reducer;

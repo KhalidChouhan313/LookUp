@@ -70,7 +70,7 @@ function MapComponent() {
         <iframe
           title="User Location"
           src={`https://maps.google.com/maps?q=${coords.lat},${coords.lng}&z=15&output=embed`}
-          className="w-full h-[20vh] md:h-[20vh] rounded-lg shadow-md"
+          className="w-full h-[20vh] md:h-[50vh] rounded-lg shadow-md"
           allowFullScreen
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"

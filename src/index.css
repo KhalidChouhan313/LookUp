@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 @theme {
   --body-color: #ffffff;
   --text-color: #1f1f1f;
@@ -8,7 +9,8 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
-body, html {
+body,
+html {
   height: 100%;
   margin: 0;
 }
