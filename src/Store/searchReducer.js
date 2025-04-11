@@ -8,7 +8,7 @@ const initialState = {
     url: null,
     name: null,
   },
-  location: { lat: null, lng: null, radius: null, screenShot: null },
+  location: { lat: null, lng: null, radius: 0 },
   searchResults: [],
 };
 
@@ -50,7 +50,7 @@ const searchSlice = createSlice({
       delete state.location;
     },
     removeRadious: (state) => {
-      delete state.location.radius;
+      state.location.radius = 0;
     },
   },
 });

@@ -2,7 +2,6 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCategory } from "../../Store/searchReducer";
 import { toast } from "react-toastify";
-import { motion, AnimatePresence } from "framer-motion";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -17,7 +16,6 @@ export default function CategoryComponents({
   const dispatch = useDispatch();
   const { category } = useSelector((state) => state.search);
 
-  // Handle category selection
   const handleCategoryAdd = (e) => {
     const newCategory = e.target.value;
 
@@ -34,30 +32,22 @@ export default function CategoryComponents({
     }
   };
 
-  // Slider settings
   const settings = {
-    dots: false,
-    infinite: true,
-    speed: 500,
-    rows: 2,
-    slidesPerRow: 1,
-    slidesToShow: 3,
-    slidesToScroll: 1,
+    className: "center",
     centerMode: true,
-    centerPadding: "60px",
+    infinite: true,
+    centerPadding: "50px",
+    slidesToShow: 3,
+    speed: 500,
+    rows: 3,
+    slidesPerRow: 2,
     responsive: [
       {
-        breakpoint: 768, 
-        settings: {
-          slidesToShow: 2,
-          slidesToScroll: 1,
-        },
-      },
-      {
-        breakpoint: 480, 
+        breakpoint: 768,
         settings: {
           slidesToShow: 1,
-          slidesToScroll: 2,
+          slidesPerRow: 1,
+          rows: 2,
         },
       },
     ],
@@ -65,20 +55,13 @@ export default function CategoryComponents({
 
   const categories = [
     { value: "quick_meals", label: "Quick and Easy Meals" },
-    { value: "quick_meals", label: "Quick and Easy Meals" },
-    { value: "quick_meals", label: "Quick and Easy Meals" },
-    { value: "electronics", label: "Electronics" },
-    { value: "electronics", label: "Electronics" },
     { value: "electronics", label: "Electronics" },
     { value: "live_updates", label: "Live Order Updates" },
     { value: "support", label: "24/7 Customer Support" },
-    { value: "support", label: "24/7 Customer Support" },
-    { value: "support", label: "24/7 Customer Support" },
     { value: "groceries", label: "Groceries" },
     { value: "clothing", label: "Clothing" },
-    { value: "clothing", label: "Clothing" },
-    { value: "clothing", label: "Clothing" },
-    { value: "clothing", label: "Clothing" },
+    { value: "appliances", label: "Home Appliances" },
+    { value: "books", label: "Books & Stationery" },
   ];
 
   return (
@@ -90,10 +73,10 @@ export default function CategoryComponents({
       <div className="w-full max-w-[90vw] md:max-w-[70vw]">
         <Slider {...settings}>
           {categories.map((categoryItem, index) => (
-            <div key={index} className="p-1 grid grid-cols-3">
+            <div key={index} className="p-2">
               <label
                 htmlFor={categoryItem.value}
-                className="border cursor-pointer text-[#5A81FA] flex items-center justify-center p-3 rounded-lg shadow-md text-[4vw] md:text-base bg-white hover:bg-gray-50 transition duration-300"
+                className="w-full border cursor-pointer text-[#5A81FA] flex items-center justify-center p-3 rounded-lg shadow-md text-[4vw] md:text-base bg-white hover:bg-gray-50 transition duration-300"
               >
                 <input
                   type="radio"

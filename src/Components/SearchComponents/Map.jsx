@@ -22,7 +22,6 @@ function MapComponent() {
           setLocation({
             lat: latitude,
             lng: longitude,
-            screenShot: screenShotURL,
           })
         );
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Search, UploadIcon } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Modal from "../Components/Modal";
 import { motion, AnimatePresence, m, color } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
@@ -128,6 +128,9 @@ const Home = () => {
       }
     }
   };
+  useEffect(() => {
+    console.log(location.radius);
+  });
 
   const nextStep = () => {
     console.log("category selected", category);
@@ -154,15 +157,19 @@ const Home = () => {
       setSearchClicked(true);
     }
   };
-  const handleChange = (e) => {
-    const value = parseInt(e.target.value);
-    dispatch(setLocation({ ...location, radius: value }));
+  const handleRadius = (e) => {
+    const value = parseInt(e.target.value, 10);
+    console.log("Slider value changed:", value); // Debugging line
+    if (value >= 0 && value <= 500) {
+      dispatch(setLocation({ ...location, radius: value }));
+    }
   };
+
   const removeRadius = () => {
     setStep(3);
     dispatch(removeRadious());
     setLastCategoryStep(step);
-  }
+  };
   //#endregion
 
   return (
@@ -170,10 +177,10 @@ const Home = () => {
       <h1
         className={`text-text-color absolute font-dm-sans text-[40px] font-extrabold leading-normal transition-all duration-800 
            ${
-             step === 3 || step === 4
+             step === 3 || step === 4 || step === 2
                ? "top-[0vh]"
                : searchClicked
-               ? "top-[5vh]"
+               ? "top-[3vh]"
                : "top-[20vh]"
            }`}
       >
@@ -208,7 +215,7 @@ const Home = () => {
               }}
             />
             <label
-              htmlForr="floating_filled"
+              htmlFor="floating_filled"
               className="absolute text-md text-gray-500 dark:text-gray-400 duration-300
                  transform -translate-y-4 scale-100 top-4 z-10 origin-[0]
                   start-3 peer-focus:text-blue-600 peer-focus:dark:text-[#77a1c2]
@@ -257,11 +264,16 @@ const Home = () => {
             <div className="w-full h-full flex flex-col items-center  transition-all duration-800 ease-in-out ">
               <div
                 className={`flex items-center justify-center flex-col  ${
-                  step === 4 ? "p-3" : "gap-6 md:p-0 p-3"
+                  step === 4 || step === 3
+                    ? "p-3 gap-2  "
+                    : "gap-[10vh] md:p-0 p-3"
                 }`}
               >
                 <AnimatePresence mode="wait">
-                  <motion.div className="w-full flex flex-col justify-center items-center">
+                  <motion.div
+                    transition={{ duration: 0.7, ease: "easeOut" }}
+                    className="w-full flex flex-col justify-center items-center mt-0"
+                  >
                     <div className="w-full flex  flex-col">
                       {step == 4 ? null : (
                         <div
@@ -331,8 +343,8 @@ const Home = () => {
                                 className="w-16 h-16 object-fill border-dotted border-2 rounded-lg p-1"
                                 onClick={(e) => RemoveImage(e, image)}
                               />
-                              <h6 className="text-[#1F1F1F] cursor-pointer font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
-                                {imageURL.name}
+                              <h6 className=" ml-4 text-[#1F1F1F] cursor-pointer font-dm-sans text-[4vw] md:text-[1rem] font-normal leading-normal">
+                                {imageURL.name.slice(0, 50)}...
                               </h6>
                             </div>
                           )}
@@ -348,7 +360,7 @@ const Home = () => {
                       initial={{ x: 100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: -100, opacity: 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
                       className="w-full h-full flex flex-col items-center mt-8"
                     >
                       <CategoryComponents
@@ -367,7 +379,7 @@ const Home = () => {
                       initial={{ x: 100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: -100, opacity: 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
                     >
                       <div
                         className={`mt- text-center ${
@@ -422,10 +434,10 @@ const Home = () => {
                       initial={{ x: 100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: -100, opacity: 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
                     >
                       <div
-                        className={` text-center ${
+                        className={` text-center  ${
                           searchClicked ? "block" : "hidden"
                         }`}
                       >
@@ -440,7 +452,7 @@ const Home = () => {
                         >
                           <MapComponent />
                         </div>
-                        <div className="mt-1">
+                        <div className="mt-[10px]">
                           <h6 className="text-black font-dm-sans text-[6vw] md:text-[1.5rem] font-bold">
                             Select Your Radius
                           </h6>
@@ -449,12 +461,12 @@ const Home = () => {
                             type="range"
                             min="0"
                             max="500"
-                            value={location.radius}
-                            onChange={handleChange}
+                            value={location?.radius || 0} 
+                            onChange={handleRadius}
                             className="w-full"
                           />
                           <span className="block mt-1 text-black">
-                            Radius:{location.radius} km
+                            Radius: {location?.radius || 0} km
                           </span>
                         </div>
                       </div>
@@ -467,7 +479,7 @@ const Home = () => {
                       initial={{ x: 100, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: -100, opacity: 0 }}
-                      transition={{ duration: 1, ease: "easeOut" }}
+                      transition={{ duration: 0.7, ease: "easeOut" }}
                     >
                       <div
                         className={` w-full flex  flex-col items-center justify-center  ${
@@ -568,7 +580,7 @@ const Home = () => {
                               className=" flex flex-row gap-2 font-bold text-center "
                               onClick={removeMap}
                             >
-                            <MapComponent />
+                              <MapComponent />
                             </div>
                           </div>
                         </div>
@@ -578,10 +590,11 @@ const Home = () => {
                  border border-gray-300 bg-gradient-to-b from-white to-[#f1f1f1]/95 shadow-md
                  "
                           >
-                            <p className="font-bold mt-2" 
-                            onClick={removeRadius}
+                            <p
+                              className="font-bold mt-2"
+                              onClick={removeRadius}
                             >
-                              Your selected radius: {location.radius}
+                              Your selected radius: {location.radius  || 0} 
                               km
                             </p>
                           </div>
